@@ -6,6 +6,6 @@
     "start": "python3 EternalBot.py"
   },
   "dependencies": {
-    "discord.py" : "0.16.12"
+    "discord.py" : "v0.16.12"
   }
 }
