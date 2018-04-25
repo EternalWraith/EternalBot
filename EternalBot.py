@@ -2,6 +2,8 @@
 import discord
 from discord.ext import commands
 
+__version__="0.0.0"
+
 command_prefix='e!'
 description = 'Enter a description here'
 bot = commands.Bot(command_prefix)
