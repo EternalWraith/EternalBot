@@ -1,1 +1,1 @@
-worker: python EternalBot.py
+worker: python3 EternalBot.py
