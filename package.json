@@ -2,9 +2,6 @@
   "name": "EternalBot",
   "description": "EternalBot",
   "main": "EternalBot.py",
-  "scripts": {
-    "start": "python EternalBot.py"
-  },
   "dependencies": {
   }
 }
