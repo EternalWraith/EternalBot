@@ -6,6 +6,5 @@
     "start": "python3 EternalBot.py"
   },
   "dependencies": {
-    "discord.py" : "https://github.com/Rapptz/discord.py"
   }
 }
