@@ -3,7 +3,7 @@
   "description": "EternalBot",
   "main": "EternalBot.py",
   "scripts": {
-    "start": "python3 EternalBot.py"
+    "start": "EternalBot.py"
   },
   "dependencies": {
   }
