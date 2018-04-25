@@ -6,6 +6,6 @@
     "start": "python3 EternalBot.py"
   },
   "dependencies": {
-    "discord.py" : "11.1.0"
+    "discord.py" : "https://github.com/Rapptz/discord.py/archive/rewrite.zip\#egg\=discord.py"
   }
 }
