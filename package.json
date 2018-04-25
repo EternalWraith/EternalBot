@@ -7,6 +7,6 @@
     "start": "python bot.py"
   },
   "dependencies": {
-    "discord.py": "1.0.0a"
+    "discord.py": "1.0.0a0"
   }
 }
