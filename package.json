@@ -7,6 +7,5 @@
     "start": "python EternalBot.py"
   },
   "dependencies": {
-    "discord.py": "1.0.0a0"
   }
 }
