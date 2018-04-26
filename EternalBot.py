@@ -15,7 +15,12 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
-    client.change_presence(activity="Nibbling on cookies", status=discord.Status.dnd)
+    await bot.change_presence(activity=discord.Game(name="Nibbling on Cookies", url="http://twitch.tv/megaskull100", type=1), status=discord.Status.dnd)
+
+@client.event
+async def on_ready():
+    print('Running client')
+    await client.change_presence(activity="Nibbling on cookies", status=discord.Status.dnd)
 
 @bot.command(pass_context=True)
 async def ping(ctx):
