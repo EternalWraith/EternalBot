@@ -9,19 +9,22 @@ def get_prefix(bot, message):
     prefixes = {}
 
     readthem = conn.cursor()
-    readthem.execute("SELECT * FROM Servers")
+    try:
+        readthem.execute("SELECT * FROM Servers")
 
-    server_list = readthem.fetchall()
-    print(server_list)
-    for row in server_list:
-        readthem.execute("SELECT Prefix FROM server_{0}".format(row[1]))
-        prefixes[row[1]] = readthem.fetchall()[0][0]
+        server_list = readthem.fetchall()
+        print(server_list)
+        for row in server_list:
+            readthem.execute("SELECT Prefix FROM server_{0}".format(row[1]))
+            prefixes[row[1]] = readthem.fetchall()[0][0]
 
-    print(prefixes)
-    if not message.guild:
-        return '?'
-    else:
-        return commands.when_mentioned_or(prefixes[message.guild.id])(bot, message)
+        print(prefixes)
+        if not message.guild:
+            return '?'
+        else:
+            return commands.when_mentioned_or(prefixes[message.guild.id])(bot, message)
+    except:
+        return commands.when_mentioned_or("e!")(bot, message)
 
 conn = database.connect("config.db")
 config = conn.cursor()
@@ -109,19 +112,46 @@ UPDATE server_{0} SET Prefix = "{1}"
 """.format(ctx.guild.id, text))
 
 @bot.command(name='setup')
-async def setup(ctx, *, text: str):
-    print("Setup executeed with magic word: {0}".format(text))
-    if text == "Butternut":
+async def setup(ctx):
+    if ctx.message.author.id == 270480523833507850:
         config.execute("""
-CREATE TABLE Servers (
-    ID int AUTO_INCREMENT,
-    ServerID int
-);
-""")
+    CREATE TABLE Servers (
+        ID int AUTO_INCREMENT,
+        ServerID int
+    );
+    """)
         print("Setup first time database")
         conn.commit()
     else:
-        await ctx.send("Nu-uh! That's not the magic word!")
+        await ctx.send("Sorry, you don't have permission to use this command! Only Daddy Eternal has permission to use this!")
+
+@bot.command(name='repair')
+async def repair(ctx):
+    if ctx.message.author.id == 270480523833507850:
+            try:
+                config.execute("""
+DROP TABLE server_{0};
+""".format(ctx.guild.id))
+            except:
+                print("No table to delete")
+            conn.commit()
+            try:
+                config.execute("""
+CREATE TABLE server_{0} (
+    Prefix varchar(255)
+);
+""".format(ctx.guild.id))
+                config.execute("""
+INSERT INTO server_{0} (Prefix) VALUES ("e!");
+""".format(ctx.guild.id))
+                config.execute("""
+INSERT INTO Servers (ServerID) VALUES ({0});
+""".format(ctx.guild.id))
+                conn.commit()
+            except:
+                print("Could not create table... for some reason \_(^-^)_/")
+    else:
+        await ctx.send("Sorry, you don't have permission to use this command! Only Daddy Eternal has permission to use this!")
 
 
 
