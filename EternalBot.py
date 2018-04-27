@@ -65,6 +65,7 @@ def upload(filename):
         file = service.files().create(body=metadata,
                                         media_body=media,
                                         fields='id').execute()
+        filestorage[filename] = file["id"]
     print('Uploaded "%s"' % (filename))
 
 def download(file_name, file_id):
