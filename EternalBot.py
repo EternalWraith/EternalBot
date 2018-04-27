@@ -1,11 +1,19 @@
 #NDM4Nzc1Mjc1MDE1MTEwNjY2.DcJtxw.8U1TRxkhnLEkRHvqF8YcWztUeGc
-import discord
+from __future__ import print_function
+import discord, os, io
 import sqlite3 as database
 from discord.ext import commands
+
+from apiclient.discovery import build
+from apiclient.http import MediaFileUpload, MediaIoBaseDownload
+from httplib2 import Http
+from oauth2client import file, client, tools
 
 __version__="0.0.0"
 
 def get_prefix(bot, message):
+    conn = database.connect(DBNAME)
+    config = conn.cursor()
     prefixes = {}
 
     readthem = conn.cursor()
@@ -19,6 +27,7 @@ def get_prefix(bot, message):
             prefixes[row[1]] = readthem.fetchall()[0][0]
 
         print(prefixes)
+        conn.close()
         if not message.guild:
             return '?'
         else:
@@ -26,10 +35,69 @@ def get_prefix(bot, message):
     except:
         return commands.when_mentioned_or("e!")(bot, message)
 
-conn = database.connect("config.db")
-config = conn.cursor()
+DBNAME = "config.db"
 bot = commands.Bot(command_prefix=get_prefix, description='Eternal Bot')
+filestorage = {}
 
+SCOPES = 'https://www.googleapis.com/auth/drive'
+store = file.Storage('login.json')
+creds = store.get()
+if not creds or creds.invalid:
+    flow = client.flow_from_clientsecrets('client_secret.json', SCOPES)
+    creds = tools.run_flow(flow, store)
+service = build('drive', 'v3', http=creds.authorize(Http()))
+
+def upload(filename):
+    metadata = {'name': filename}
+    if filename in filestorage:
+        file_id = filestorage[filename]
+        file = service.files().get(fileId=file_id).execute()
+        media_body = MediaFileUpload(
+        filename, mimetype='application/x-sqlite3', resumable=True)
+
+        updated_file = service.files().update(
+        fileId=file_id,
+        #body=file,
+        media_body=media_body).execute()
+    else:
+        media = MediaFileUpload(filename,
+                            mimetype='application/x-sqlite3')
+        file = service.files().create(body=metadata,
+                                        media_body=media,
+                                        fields='id').execute()
+    print('Uploaded "%s"' % (filename))
+
+def download(file_name, file_id):
+    request = service.files().get_media(fileId=file_id)
+    fh = io.BytesIO()
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while done is False:
+        status, done = downloader.next_chunk()
+    print('Downloaded "%s" (%s)' % (file_name, file_id))
+    contents = fh.getvalue()
+    outf = open(file_name, "wb")
+    outf.write(contents)
+    outf.close()
+    filestorage[file_name] = file_id
+
+def download_all():
+    items = []
+    results = service.files().list(
+        pageSize=10, fields="nextPageToken, files(id, name)").execute()
+    items += results.get('files', [])
+    token = results.get('nextPageToken', None)
+    while token != None:
+        results = service.files().list(
+        pageSize=10, fields="nextPageToken, files(id, name)").execute()
+        items += results.get('files', [])
+        token = results.get('nextPageToken', None)
+    if not items:
+        print('No files found.')
+    else:
+        print('Files:')
+        for item in items:
+            download(item['name'], item['id'])
 
 @bot.event
 async def on_ready():
@@ -37,6 +105,7 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
+    download_all()
     await bot.change_presence(activity=discord.Game(name="Nibbling on Cookies", type=1, url="http://twitch.tv/megaskull100"))
 
 @bot.event
@@ -51,6 +120,8 @@ async def on_message(message):
 
 @bot.event
 async def on_guild_join(ctx):
+    conn = database.connect(DBNAME)
+    config = conn.cursor()
     config.execute("""
 CREATE TABLE server_{0} (
     Prefix varchar(255)
@@ -64,13 +135,21 @@ INSERT INTO Servers (ServerID) VALUES ({0});
 """.format(ctx.id))
     conn.commit()
     print("Joined {0}".format(ctx.name))
+    conn.close()
+    upload(DBNAME)
+    conn = database.connect(DBNAME)
     
 @bot.event
 async def on_guild_remove(ctx):
+    conn = database.connect(DBNAME)
+    config = conn.cursor()
     config.execute("""
 DROP TABLE server_{0};
 """.format(ctx.id))
     conn.commit()
+    conn.close()
+    upload(DBNAME)
+    conn = database.connect(DBNAME)
     print("Left {0}".format(ctx.name))
 
 @bot.command(name='ping') #brief="Ping me, I'll Pong you right back! >:3"
@@ -106,14 +185,22 @@ async def invite(ctx):
 
 @bot.command(name='prefix')
 async def prefix(ctx, *, text: str):
+    conn = database.connect(DBNAME)
+    config = conn.cursor()
     print("Setting Prefix of {0} to {1}".format(ctx.guild, text))
     config.execute("""
 UPDATE server_{0} SET Prefix = "{1}"
 """.format(ctx.guild.id, text))
+    conn.commit()
+    conn.close()
+    upload(DBNAME)
+    conn = database.connect(DBNAME)
 
 @bot.command(name='setup')
 async def setup(ctx):
     if ctx.message.author.id == 270480523833507850:
+        conn = database.connect(DBNAME)
+        config = conn.cursor()
         config.execute("""
     CREATE TABLE Servers (
         ID int AUTO_INCREMENT,
@@ -122,11 +209,16 @@ async def setup(ctx):
     """)
         print("Setup first time database")
         conn.commit()
+        conn.close()
+        upload(DBNAME)
+        conn = database.connect(DBNAME)
     else:
         await ctx.send("Sorry, you don't have permission to use this command! Only Daddy Eternal has permission to use this!")
 
 @bot.command(name='repair')
 async def repair(ctx):
+    conn = database.connect(DBNAME)
+    config = conn.cursor()
     if ctx.message.author.id == 270480523833507850:
             try:
                 config.execute("""
@@ -150,6 +242,9 @@ INSERT INTO Servers (ServerID) VALUES ({0});
                 conn.commit()
             except:
                 print("Could not create table... for some reason \_(^-^)_/")
+            conn.close()
+            upload(DBNAME)
+            conn = database.connect(DBNAME)
     else:
         await ctx.send("Sorry, you don't have permission to use this command! Only Daddy Eternal has permission to use this!")
 
