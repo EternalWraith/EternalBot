@@ -1,6 +1,6 @@
 #NDM4Nzc1Mjc1MDE1MTEwNjY2.DcJtxw.8U1TRxkhnLEkRHvqF8YcWztUeGc
 from __future__ import print_function
-import discord, os, io
+import discord, os, io, random, datetime
 import sqlite3 as database
 from discord.ext import commands
 
@@ -49,6 +49,7 @@ service = build('drive', 'v3', http=creds.authorize(Http()))
 
 def upload(filename):
     metadata = {'name': filename}
+    print(filestorage)
     if filename in filestorage:
         file_id = filestorage[filename]
         file = service.files().get(fileId=file_id).execute()
@@ -121,15 +122,17 @@ async def on_message(message):
 
 @bot.event
 async def on_guild_join(ctx):
+    SERVERDB = "{0}.db".format(ctx.id)
     conn = database.connect(DBNAME)
     config = conn.cursor()
     config.execute("""
 CREATE TABLE server_{0} (
-    Prefix varchar(255)
+    Prefix varchar(255),
+    WorkCooldown int
 );
 """.format(ctx.id))
     config.execute("""
-INSERT INTO server_{0} (Prefix) VALUES ("e!");
+INSERT INTO server_{0} (Prefix, WorkCooldown, MaxWork, MinWork) VALUES ("e!", 240, 100, 50);
 """.format(ctx.id))
     config.execute("""
 INSERT INTO Servers (ServerID) VALUES ({0});
@@ -138,7 +141,20 @@ INSERT INTO Servers (ServerID) VALUES ({0});
     print("Joined {0}".format(ctx.name))
     conn.close()
     upload(DBNAME)
-    conn = database.connect(DBNAME)
+    conn = database.connect(SERVERDB)
+    config = conn.cursor()
+    config.execute("""
+    CREATE TABLE Money (
+        ID int AUTO_INCREMENT,
+        UserID int,
+        Wallet int,
+        Bank int,
+        LastWork varchar(255)
+    );
+    """)
+    conn.commit()
+    conn.close()
+    upload(SERVERDB)
     
 @bot.event
 async def on_guild_remove(ctx):
@@ -150,7 +166,6 @@ DROP TABLE server_{0};
     conn.commit()
     conn.close()
     upload(DBNAME)
-    conn = database.connect(DBNAME)
     print("Left {0}".format(ctx.name))
 
 @bot.command(name='ping') #brief="Ping me, I'll Pong you right back! >:3"
@@ -195,13 +210,15 @@ UPDATE server_{0} SET Prefix = "{1}"
     conn.commit()
     conn.close()
     upload(DBNAME)
-    conn = database.connect(DBNAME)
+    await ctx.send("Prefix for {0} has been changed to {1}!".format(ctx.guild, text))
 
 @bot.command(name='setup')
 async def setup(ctx):
     if ctx.message.author.id == 270480523833507850:
         conn = database.connect(DBNAME)
         config = conn.cursor()
+        try: config.execute("DROP TABLE Servers")
+        except: print("No table to delete")
         config.execute("""
     CREATE TABLE Servers (
         ID int AUTO_INCREMENT,
@@ -212,15 +229,17 @@ async def setup(ctx):
         conn.commit()
         conn.close()
         upload(DBNAME)
-        conn = database.connect(DBNAME)
+        await ctx.send("Database has been set up!")
     else:
         await ctx.send("Sorry, you don't have permission to use this command! Only Daddy Eternal has permission to use this!")
 
 @bot.command(name='repair')
 async def repair(ctx):
+    SERVERDB = "{0}.db".format(ctx.guild.id)
     conn = database.connect(DBNAME)
     config = conn.cursor()
     if ctx.message.author.id == 270480523833507850:
+            SERVERDB = "{0}.db".format(ctx.guild.id)
             try:
                 config.execute("""
 DROP TABLE server_{0};
@@ -231,25 +250,147 @@ DROP TABLE server_{0};
             try:
                 config.execute("""
 CREATE TABLE server_{0} (
-    Prefix varchar(255)
+    Prefix varchar(255),
+    WorkCooldown int,
+    MaxWork int,
+    MinWork int
 );
 """.format(ctx.guild.id))
                 config.execute("""
-INSERT INTO server_{0} (Prefix) VALUES ("e!");
+INSERT INTO server_{0} (Prefix, WorkCooldown, MaxWork, MinWork) VALUES ("e!", 240, 100, 50);
 """.format(ctx.guild.id))
                 config.execute("""
 INSERT INTO Servers (ServerID) VALUES ({0});
 """.format(ctx.guild.id))
                 conn.commit()
+                conn.close()
+                
+                conn = database.connect(SERVERDB)
+                config = conn.cursor()
+                try:
+                    config.execute("""
+DROP TABLE Money;
+""")
+                except:
+                   print("No table to delete")
+                config.execute("""
+                CREATE TABLE Money (
+                    ID int AUTO_INCREMENT,
+                    UserID int,
+                    Wallet int,
+                    Bank int,
+                    LastWork varchar(255)
+                );
+                """)
+                conn.commit()
+                conn.close()
+                await ctx.send("Database repaired for your server!")
             except:
+                await ctx.send("Failed to repair database. Please contact <@270480523833507850> for help!")
                 print("Could not create table... for some reason \_(^-^)_/")
-            conn.close()
             upload(DBNAME)
-            conn = database.connect(DBNAME)
+            upload(SERVERDB)
     else:
         await ctx.send("Sorry, you don't have permission to use this command! Only Daddy Eternal has permission to use this!")
 
+@bot.command(name='work')
+async def work(ctx):
+    conn = database.connect(DBNAME)
+    config = conn.cursor()
+    config.execute("SELECT WorkCooldown, MaxWork, MinWork FROM server_{0}".format(ctx.guild.id))
+    cooldown, maxwork, minwork = config.fetchall()[0]
+    conn.close()
+    
+    conn = database.connect("{0}.db".format(ctx.guild.id))
+    config = conn.cursor()
+    config.execute("SELECT Wallet, Bank, LastWork FROM Money WHERE UserID={0}".format(ctx.author.id))
+    money = config.fetchall()
+    gained = random.randint(minwork, maxwork)
+    timework = "{0} {1} {2} {3} {4} {5}".format(datetime.datetime.now().year,datetime.datetime.now().month,datetime.datetime.now().day,datetime.datetime.now().hour,datetime.datetime.now().minute,datetime.datetime.now().second)
+    now = datetime.datetime(datetime.datetime.now().year,datetime.datetime.now().month,datetime.datetime.now().day,datetime.datetime.now().hour,datetime.datetime.now().minute,datetime.datetime.now().second)
 
+    if len(money) > 0:
+        if money[0][2] != "Never":
+            splitup = money[0][2].split(" ")
+            then = datetime.datetime(int(splitup[0]),int(splitup[1]),int(splitup[2]),int(splitup[3]),int(splitup[4]),int(splitup[5]))
+
+    if len(money) > 0:
+        if money[0][2] == "Never" or (now-then).seconds/60 >= cooldown:
+            wallet = money[0][0]
+            bank = money[0][1]
+            config.execute("""
+    UPDATE Money SET Wallet = {1}, LastWork = "{2}" WHERE UserID = {0}
+    """.format(ctx.author.id, wallet+gained, timework))
+            await ctx.send("You earned :cookie:{0}! Good job!".format(gained))
+        else:
+            await ctx.send("You can work again in {0} minutes!".format( round(cooldown-(now-then).seconds/60)) )
+    else:
+        config.execute("""
+    INSERT INTO Money (UserID, Wallet, Bank, LastWork) VALUES ({0}, {2}, {1}, "{3}");
+    """.format(ctx.author.id, 0, gained, timework))
+        await ctx.send("You earned :cookie:{0}! Good job!".format(gained))
+    conn.commit()
+    conn.close()
+    upload("{0}.db".format(ctx.guild.id))
+
+@bot.command(name='balance')
+async def balance(ctx, *, user: discord.User=None):
+    if user == None:
+        user = ctx.author
+    conn = database.connect("{0}.db".format(ctx.guild.id))
+    config = conn.cursor()
+    config.execute("SELECT Wallet, Bank FROM Money WHERE UserID={0}".format(user.id))
+    money = config.fetchall()
+    if len(money) == 0:
+        wallet = 0
+        bank = 0
+        config.execute("""
+INSERT INTO Money (UserID, Wallet, Bank, LastWork) VALUES ({0}, {1}, {1}, "Never");
+""".format(user.id, 0))
+    else:
+        wallet = money[0][0]
+        bank = money[0][1]
+    embed = discord.Embed(title="Currency of {0}".format(user.name), color=0x00ff00)
+    embed.add_field(name="Wallet", value=":cookie:"+str(wallet), inline=False)
+    embed.add_field(name="Bank", value=":cookie:"+str(bank), inline=False)
+    await ctx.channel.send(embed=embed)
+    conn.commit()
+    conn.close()
+    upload("{0}.db".format(ctx.guild.id))
+
+@bot.command(name='deposit')
+async def deposit(ctx, *, text: str="All"):
+    conn = database.connect("{0}.db".format(ctx.guild.id))
+    config = conn.cursor()
+    config.execute("SELECT Wallet, Bank FROM Money WHERE UserID={0}".format(ctx.author.id))
+    wallet, bank = config.fetchall()[0]
+    try:
+        amount = int(text)
+    except:
+        amount = wallet
+    config.execute("""
+    UPDATE Money SET Wallet = {1}, Bank = {2} WHERE UserID = {0}
+    """.format(ctx.author.id, wallet-amount, bank+amount))
+    await ctx.send("You deposited {0}!".format(amount))
+    conn.commit()
+    conn.close()
+
+@bot.command(name='withdraw')
+async def withdraw(ctx, *, text: str="All"):
+    conn = database.connect("{0}.db".format(ctx.guild.id))
+    config = conn.cursor()
+    config.execute("SELECT Wallet, Bank FROM Money WHERE UserID={0}".format(ctx.author.id))
+    wallet, bank = config.fetchall()[0]
+    try:
+        amount = int(text)
+    except:
+        amount = bank
+    config.execute("""
+    UPDATE Money SET Wallet = {1}, Bank = {2} WHERE UserID = {0}
+    """.format(ctx.author.id, wallet+amount, bank-amount))
+    await ctx.send("You withdrew {0}!".format(amount))
+    conn.commit()
+    conn.close()
 
 #DO NOT REMOVE THIS, EVERYTHING MUST BE ABOVE THIS
 bot.run('NDM4Nzc1Mjc1MDE1MTEwNjY2.DcJtxw.8U1TRxkhnLEkRHvqF8YcWztUeGc')
