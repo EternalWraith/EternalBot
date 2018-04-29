@@ -350,7 +350,7 @@ INSERT INTO Money (UserID, Wallet, Bank, LastWork) VALUES ({0}, {1}, {1}, "Never
     else:
         wallet = money[0][0]
         bank = money[0][1]
-    embed = discord.Embed(title="Currency of {0}".format(user.name), color=0x00ff00)
+    embed = discord.Embed(title="Balance of {0}".format(user.name), color=0x00ff00)
     embed.add_field(name="Wallet", value=":cookie:"+str(wallet), inline=False)
     embed.add_field(name="Bank", value=":cookie:"+str(bank), inline=False)
     await ctx.channel.send(embed=embed)
@@ -368,6 +368,7 @@ async def deposit(ctx, *, text: str="All"):
         amount = int(text)
     except:
         amount = wallet
+    if amount > wallet: amount = wallet
     config.execute("""
     UPDATE Money SET Wallet = {1}, Bank = {2} WHERE UserID = {0}
     """.format(ctx.author.id, wallet-amount, bank+amount))
@@ -385,6 +386,7 @@ async def withdraw(ctx, *, text: str="All"):
         amount = int(text)
     except:
         amount = bank
+    if amount > bank: amount = bank
     config.execute("""
     UPDATE Money SET Wallet = {1}, Bank = {2} WHERE UserID = {0}
     """.format(ctx.author.id, wallet+amount, bank-amount))
