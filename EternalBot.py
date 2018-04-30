@@ -395,7 +395,8 @@ async def withdraw(ctx, *, text: str="All"):
     conn.close()
 
 @bot.command(name='settings')
-async def settings(ctx, *, command: str, text: str, value: int):
+async def settings(ctx, *, text: str):
+    command, text, value = text.split(" ")
     editable = { "work" : 0 }
     editable["work"] = { "Location" : DBNAME, "Table" : "server_{0}".format(ctx.guild.id), "Where": False }
     editable["work"]["Options"] = {"max": {"ID": "MaxWork"}, "min": {"ID": "MinWork"}, "wait": {"ID": "WorkCooldown"} }
