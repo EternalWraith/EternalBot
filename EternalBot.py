@@ -317,8 +317,7 @@ async def work(ctx):
             then = datetime.datetime(int(splitup[0]),int(splitup[1]),int(splitup[2]),int(splitup[3]),int(splitup[4]),int(splitup[5]))
 
     if len(money) > 0:
-		timecriteria = ( ( (now-then).seconds/60 >= cooldown and (now-then).days == 0 ) or ((now-then).days == 1) )
-        if money[0][2] == "Never" or timecriteria :
+        if money[0][2] == "Never" or ( ( (now-then).seconds/60 >= cooldown and (now-then).days == 0 ) or ((now-then).days == 1) ) :
             wallet = money[0][0]
             bank = money[0][1]
             config.execute("""
