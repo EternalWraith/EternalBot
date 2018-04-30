@@ -200,6 +200,7 @@ async def invite(ctx):
                            .format(discord.utils.oauth_url(app_info.id, perms)))
 
 @bot.command(name='prefix')
+@bot.is_owner()
 async def prefix(ctx, *, text: str):
     conn = database.connect(DBNAME)
     config = conn.cursor()
@@ -294,6 +295,7 @@ DROP TABLE Money;
         await ctx.send("Sorry, you don't have permission to use this command! Only Daddy Eternal has permission to use this!")
 
 @bot.command(name='work')
+@bot.guild_only()
 async def work(ctx):
     conn = database.connect(DBNAME)
     config = conn.cursor()
@@ -334,6 +336,7 @@ async def work(ctx):
     upload("{0}.db".format(ctx.guild.id))
 
 @bot.command(name='balance')
+@bot.guild_only()
 async def balance(ctx, *, user: discord.User=None):
     if user == None:
         user = ctx.author
@@ -359,6 +362,7 @@ INSERT INTO Money (UserID, Wallet, Bank, LastWork) VALUES ({0}, {1}, {1}, "Never
     upload("{0}.db".format(ctx.guild.id))
 
 @bot.command(name='deposit')
+@bot.guild_only()
 async def deposit(ctx, *, text: str="All"):
     conn = database.connect("{0}.db".format(ctx.guild.id))
     config = conn.cursor()
@@ -377,6 +381,7 @@ async def deposit(ctx, *, text: str="All"):
     conn.close()
 
 @bot.command(name='withdraw')
+@bot.guild_only()
 async def withdraw(ctx, *, text: str="All"):
     conn = database.connect("{0}.db".format(ctx.guild.id))
     config = conn.cursor()
@@ -395,6 +400,7 @@ async def withdraw(ctx, *, text: str="All"):
     conn.close()
 
 @bot.command(name='settings')
+@bot.is_owner()
 async def settings(ctx, *, text: str):
     command, text, value = text.split(" ")
     editable = { "work" : 0 }
