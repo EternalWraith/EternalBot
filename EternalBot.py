@@ -316,9 +316,9 @@ async def work(ctx):
             splitup = money[0][2].split(" ")
             then = datetime.datetime(int(splitup[0]),int(splitup[1]),int(splitup[2]),int(splitup[3]),int(splitup[4]),int(splitup[5]))
 
-    diff = now-then
-    print(diff, now, then)
     if len(money) > 0:
+        diff = now-then
+        print(diff, now, then)
         if money[0][2] == "Never" or ( diff.seconds/60 >= cooldown and diff.days == 0 ) or diff.days >= 1  :
             wallet = money[0][0]
             bank = money[0][1]
