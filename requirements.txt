@@ -1,3 +1,2 @@
 git+https://github.com/Rapptz/discord.py@rewrite
 git+https://github.com/google/google-api-python-client
-git+https://github.com/aio-libs/aiohttp
