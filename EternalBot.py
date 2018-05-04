@@ -36,6 +36,8 @@ def get_prefix(bot, message):
 DBNAME = "config.db"
 bot = commands.Bot(command_prefix=get_prefix, description='Eternal Bot')
 bot.load_extension("EternalCurrency")
+bot.load_extension("EternalFun")
+bot.load_extension("EternalAdmin")
 
 
 @bot.event
@@ -108,50 +110,8 @@ DROP TABLE server_{0};
     upload(DBNAME)
     print("Left {0}".format(ctx.name))
 
-@bot.command(name='ping', brief="Ping me, I'll Pong you right back! >:3")
-async def ping(ctx):
-    await ctx.send("Pong! *(psst, stats for the nerds! {0}, {1})*".format(ctx.channel,ctx.channel.id))
 
-@bot.command(name='communism') #brief='Cyka Blayt Bratukha! Rush B {-}7'
-async def communism(ctx):
-    await ctx.channel.send('☭')
-    await ctx.message.delete()
 
-@bot.command(name='pfp', brief="Hey! Baka! Why you looking at other people's profile pictures? Hmmm?")
-async def pfp(ctx, *, user: discord.User):
-    em = discord.Embed()
-    em.set_image(url=user.avatar_url)
-    await ctx.channel.send(embed=em)
-
-@bot.command(name='invite')
-async def invite(ctx):
-        perms = discord.Permissions.none()
-        perms.read_messages = True
-        perms.send_messages = True
-        perms.manage_roles = True
-        perms.ban_members = True
-        perms.kick_members = True
-        perms.manage_messages = True
-        perms.embed_links = True
-        perms.read_message_history = True
-        perms.attach_files = True
-        app_info = await bot.application_info()
-        await ctx.send("Here you go friend! One invite just for you!\n{0}"
-                           .format(discord.utils.oauth_url(app_info.id, perms)))
-
-@bot.command(name='prefix', brief="I'll change your prefix for you... but then again, maybe I won't >:3")
-@commands.has_permissions(administrator=True)
-async def prefix(ctx, *, text: str):
-    conn = database.connect(DBNAME)
-    config = conn.cursor()
-    print("Setting Prefix of {0} to {1}".format(ctx.guild, text))
-    config.execute("""
-UPDATE server_{0} SET Prefix = "{1}"
-""".format(ctx.guild.id, text))
-    conn.commit()
-    conn.close()
-    upload(DBNAME)
-    await ctx.send("Prefix for {0} has been changed to {1}!".format(ctx.guild, text))
 
 @bot.command(name='setup', hidden=True)
 async def setup(ctx):
@@ -236,36 +196,6 @@ DROP TABLE Money;
 
 
 
-
-
-@bot.command(name='settings')
-@commands.has_permissions(administrator=True)
-async def settings(ctx, *, text: str):
-    command, text, value = text.split(" ")
-    editable = { "work" : 0 }
-    editable["work"] = { "Location" : DBNAME, "Table" : "server_{0}".format(ctx.guild.id), "Where": False }
-    editable["work"]["Options"] = {"max": {"ID": "MaxWork"}, "min": {"ID": "MinWork"}, "wait": {"ID": "WorkCooldown"} }
-    editable["work"]["Options"]["max"]["Message"] = "Set the max payout for working to {0}".format(value)
-    editable["work"]["Options"]["min"]["Message"] = "Set the min payout for working to {0}".format(value)
-    editable["work"]["Options"]["wait"]["Message"] = "Set the waiting time between working to {0} minutes".format(value)
-    if command in editable:
-        if text in editable[command]["Options"]:
-            conn = database.connect(editable[command]["Location"])
-            config = conn.cursor()
-            if editable[command]["Where"]:
-                pass
-            else:
-                config.execute("""
-UPDATE {0} SET {1} = {2}
-""".format(editable[command]["Table"],editable[command]["Options"][text]["ID"],value))
-            conn.commit()
-            conn.close()
-            upload(editable[command]["Location"])
-            await ctx.send(editable[command]["Options"][text]["Message"])
-        else:
-            await ctx.send("{0} is not an available option for {1}".format(text,command))
-    else:
-        await ctx.send("{0} is not an editable command".format(command))
 
 #DO NOT REMOVE THIS, EVERYTHING MUST BE ABOVE THIS
 bot.run('NDM4Nzc1Mjc1MDE1MTEwNjY2.DcJtxw.8U1TRxkhnLEkRHvqF8YcWztUeGc')

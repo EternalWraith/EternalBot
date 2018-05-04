@@ -10,7 +10,7 @@ class Currency:
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name='work', brief="Soon you'll be rolling in those delicious cookies :3 Mmmmmm cookies...")
+    @commands.command(name='work', brief="Soon you'll be rolling in those delicious cookies")
     @commands.guild_only()
     async def work(self, ctx):
         global upload
@@ -54,7 +54,7 @@ class Currency:
         conn.close()
         upload("{0}.db".format(ctx.guild.id))
 
-    @commands.command(name='balance', brief="This checks how many cookies you have. Warning: If you have too many I may need to rob you >:3")
+    @commands.command(name='balance', brief="This checks how many cookies you have")
     @commands.guild_only()
     async def balance(self, ctx, *, user: discord.User=None):
         if user == None:
@@ -80,7 +80,7 @@ class Currency:
         conn.close()
         upload("{0}.db".format(ctx.guild.id))
 
-    @commands.command(name='deposit', brief="Put your cookies in a safe place so nobody can steal them (except me...)")
+    @commands.command(name='deposit', brief="Put your cookies in a safe place so nobody can steal them")
     @commands.guild_only()
     async def deposit(self, ctx, *, text: str="All"):
         conn = database.connect("{0}.db".format(ctx.guild.id))
@@ -99,7 +99,7 @@ class Currency:
         conn.commit()
         conn.close()
 
-    @commands.command(name='withdraw', brief="Take your cookies out of a safe place, so everyone can rob them. But if someone fails to rob you, you get their cookies")
+    @commands.command(name='withdraw', brief="Take your cookies out of a safe place, so everyone can rob them")
     @commands.guild_only()
     async def withdraw(self, ctx, *, text: str="All"):
         conn = database.connect("{0}.db".format(ctx.guild.id))
