@@ -1,13 +1,11 @@
 #NDM4Nzc1Mjc1MDE1MTEwNjY2.DcJtxw.8U1TRxkhnLEkRHvqF8YcWztUeGc
 from __future__ import print_function
-import discord, os, io, random, datetime
+import discord, random, datetime
 import sqlite3 as database
-from discord.ext import commands
 
-from apiclient.discovery import build
-from apiclient.http import MediaFileUpload, MediaIoBaseDownload
-from httplib2 import Http
-from oauth2client import file, client, tools
+from discord.ext import commands
+from EternalCloudStorage import *
+
 
 __version__="0.0.0"
 
@@ -37,69 +35,8 @@ def get_prefix(bot, message):
 
 DBNAME = "config.db"
 bot = commands.Bot(command_prefix=get_prefix, description='Eternal Bot')
-filestorage = {}
+bot.load_extension("EternalCurrency")
 
-SCOPES = 'https://www.googleapis.com/auth/drive'
-store = file.Storage('login.json')
-creds = store.get()
-if not creds or creds.invalid:
-    flow = client.flow_from_clientsecrets('client_secret.json', SCOPES)
-    creds = tools.run_flow(flow, store)
-service = build('drive', 'v3', http=creds.authorize(Http()))
-
-def upload(filename):
-    metadata = {'name': filename}
-    #print(filestorage)
-    if filename in filestorage:
-        file_id = filestorage[filename]
-        file = service.files().get(fileId=file_id).execute()
-        media_body = MediaFileUpload(
-        filename, mimetype='application/x-sqlite3', resumable=True)
-
-        updated_file = service.files().update(
-        fileId=file_id,
-        #body=file,
-        media_body=media_body).execute()
-    else:
-        media = MediaFileUpload(filename,
-                            mimetype='application/x-sqlite3')
-        file = service.files().create(body=metadata,
-                                        media_body=media,
-                                        fields='id').execute()
-        filestorage[filename] = file["id"]
-    print('Uploaded "%s"' % (filename))
-
-def download(file_name, file_id):
-    request = service.files().get_media(fileId=file_id)
-    fh = io.BytesIO()
-    downloader = MediaIoBaseDownload(fh, request)
-    done = False
-    while done is False:
-        status, done = downloader.next_chunk()
-    print('Downloaded "%s" (%s)' % (file_name, file_id))
-    contents = fh.getvalue()
-    outf = open(file_name, "wb")
-    outf.write(contents)
-    outf.close()
-    filestorage[file_name] = file_id
-
-def download_all():
-    items = []
-    results = service.files().list(
-        pageSize=10, fields="nextPageToken, files(id, name)").execute()
-    items += results.get('files', [])
-    token = results.get('nextPageToken', None)
-    while token != None:
-        results = service.files().list(
-        pageSize=10, fields="nextPageToken, files(id, name)").execute()
-        items += results.get('files', [])
-        token = results.get('nextPageToken', None)
-    if not items:
-        print('No files found.')
-    else:
-        print('Files:')
-        for item in items:
-            download(item['name'], item['id'])
 
 @bot.event
 async def on_ready():
@@ -171,7 +108,7 @@ DROP TABLE server_{0};
     upload(DBNAME)
     print("Left {0}".format(ctx.name))
 
-@bot.command(name='ping') #brief="Ping me, I'll Pong you right back! >:3"
+@bot.command(name='ping', brief="Ping me, I'll Pong you right back! >:3")
 async def ping(ctx):
     await ctx.send("Pong! *(psst, stats for the nerds! {0}, {1})*".format(ctx.channel,ctx.channel.id))
 
@@ -180,7 +117,7 @@ async def communism(ctx):
     await ctx.channel.send('☭')
     await ctx.message.delete()
 
-@bot.command(name='pfp') #brief="Hey! Baka! Why you looking at other people's profile pictures? Hmmm?"
+@bot.command(name='pfp', brief="Hey! Baka! Why you looking at other people's profile pictures? Hmmm?")
 async def pfp(ctx, *, user: discord.User):
     em = discord.Embed()
     em.set_image(url=user.avatar_url)
@@ -202,7 +139,7 @@ async def invite(ctx):
         await ctx.send("Here you go friend! One invite just for you!\n{0}"
                            .format(discord.utils.oauth_url(app_info.id, perms)))
 
-@bot.command(name='prefix')
+@bot.command(name='prefix', brief="I'll change your prefix for you... but then again, maybe I won't >:3")
 @commands.has_permissions(administrator=True)
 async def prefix(ctx, *, text: str):
     conn = database.connect(DBNAME)
@@ -216,7 +153,7 @@ UPDATE server_{0} SET Prefix = "{1}"
     upload(DBNAME)
     await ctx.send("Prefix for {0} has been changed to {1}!".format(ctx.guild, text))
 
-@bot.command(name='setup')
+@bot.command(name='setup', hidden=True)
 async def setup(ctx):
     if ctx.message.author.id == 270480523833507850:
         conn = database.connect(DBNAME)
@@ -237,7 +174,7 @@ async def setup(ctx):
     else:
         await ctx.send("Sorry, you don't have permission to use this command! Only Daddy Eternal has permission to use this!")
 
-@bot.command(name='repair')
+@bot.command(name='repair', hidden=True)
 async def repair(ctx):
     SERVERDB = "{0}.db".format(ctx.guild.id)
     conn = database.connect(DBNAME)
@@ -297,112 +234,9 @@ DROP TABLE Money;
     else:
         await ctx.send("Sorry, you don't have permission to use this command! Only Daddy Eternal has permission to use this!")
 
-@bot.command(name='work')
-@commands.guild_only()
-async def work(ctx):
-    conn = database.connect(DBNAME)
-    config = conn.cursor()
-    config.execute("SELECT WorkCooldown, MaxWork, MinWork FROM server_{0}".format(ctx.guild.id))
-    cooldown, maxwork, minwork = config.fetchall()[0]
-    conn.close()
-    
-    conn = database.connect("{0}.db".format(ctx.guild.id))
-    config = conn.cursor()
-    config.execute("SELECT Wallet, Bank, LastWork FROM Money WHERE UserID={0}".format(ctx.author.id))
-    money = config.fetchall()
-    gained = random.randint(minwork, maxwork)
-    timework = "{0} {1} {2} {3} {4} {5}".format(datetime.datetime.now().year,datetime.datetime.now().month,datetime.datetime.now().day,datetime.datetime.now().hour,datetime.datetime.now().minute,datetime.datetime.now().second)
-    now = datetime.datetime(datetime.datetime.now().year,datetime.datetime.now().month,datetime.datetime.now().day,datetime.datetime.now().hour,datetime.datetime.now().minute,datetime.datetime.now().second)
 
-    if len(money) > 0:
-        if money[0][2] != "Never":
-            splitup = money[0][2].split(" ")
-            then = datetime.datetime(int(splitup[0]),int(splitup[1]),int(splitup[2]),int(splitup[3]),int(splitup[4]),int(splitup[5]))
 
-    if len(money) > 0:
-        diff = now-then
-        #print(diff, now, then)
-        if money[0][2] == "Never" or ( diff.seconds/60 >= cooldown and diff.days == 0 ) or diff.days >= 1  :
-            wallet = money[0][0]
-            bank = money[0][1]
-            config.execute("""
-    UPDATE Money SET Wallet = {1}, LastWork = "{2}" WHERE UserID = {0}
-    """.format(ctx.author.id, wallet+gained, timework))
-            await ctx.send("You earned :cookie:{0}! Good job!".format(gained))
-        else:
-            await ctx.send("You can work again in {0} minutes!".format( round(cooldown-diff.seconds/60)) )
-    else:
-        config.execute("""
-    INSERT INTO Money (UserID, Wallet, Bank, LastWork) VALUES ({0}, {2}, {1}, "{3}");
-    """.format(ctx.author.id, 0, gained, timework))
-        await ctx.send("You earned :cookie:{0}! Good job!".format(gained))
-    conn.commit()
-    conn.close()
-    upload("{0}.db".format(ctx.guild.id))
 
-@bot.command(name='balance')
-@commands.guild_only()
-async def balance(ctx, *, user: discord.User=None):
-    if user == None:
-        user = ctx.author
-    conn = database.connect("{0}.db".format(ctx.guild.id))
-    config = conn.cursor()
-    config.execute("SELECT Wallet, Bank FROM Money WHERE UserID={0}".format(user.id))
-    money = config.fetchall()
-    if len(money) == 0:
-        wallet = 0
-        bank = 0
-        config.execute("""
-INSERT INTO Money (UserID, Wallet, Bank, LastWork) VALUES ({0}, {1}, {1}, "Never");
-""".format(user.id, 0))
-    else:
-        wallet = money[0][0]
-        bank = money[0][1]
-    embed = discord.Embed(title="Balance of {0}".format(user.name), color=0x00ff00)
-    embed.add_field(name="Wallet", value=":cookie:"+str(wallet), inline=False)
-    embed.add_field(name="Bank", value=":cookie:"+str(bank), inline=False)
-    await ctx.channel.send(embed=embed)
-    conn.commit()
-    conn.close()
-    upload("{0}.db".format(ctx.guild.id))
-
-@bot.command(name='deposit')
-@commands.guild_only()
-async def deposit(ctx, *, text: str="All"):
-    conn = database.connect("{0}.db".format(ctx.guild.id))
-    config = conn.cursor()
-    config.execute("SELECT Wallet, Bank FROM Money WHERE UserID={0}".format(ctx.author.id))
-    wallet, bank = config.fetchall()[0]
-    try:
-        amount = int(text)
-    except:
-        amount = wallet
-    if amount > wallet: amount = wallet
-    config.execute("""
-    UPDATE Money SET Wallet = {1}, Bank = {2} WHERE UserID = {0}
-    """.format(ctx.author.id, wallet-amount, bank+amount))
-    await ctx.send("You deposited {0}!".format(amount))
-    conn.commit()
-    conn.close()
-
-@bot.command(name='withdraw')
-@commands.guild_only()
-async def withdraw(ctx, *, text: str="All"):
-    conn = database.connect("{0}.db".format(ctx.guild.id))
-    config = conn.cursor()
-    config.execute("SELECT Wallet, Bank FROM Money WHERE UserID={0}".format(ctx.author.id))
-    wallet, bank = config.fetchall()[0]
-    try:
-        amount = int(text)
-    except:
-        amount = bank
-    if amount > bank: amount = bank
-    config.execute("""
-    UPDATE Money SET Wallet = {1}, Bank = {2} WHERE UserID = {0}
-    """.format(ctx.author.id, wallet+amount, bank-amount))
-    await ctx.send("You withdrew {0}!".format(amount))
-    conn.commit()
-    conn.close()
 
 @bot.command(name='settings')
 @commands.has_permissions(administrator=True)
