@@ -21,12 +21,12 @@ def get_prefix(bot, message):
         readthem.execute("SELECT * FROM Servers")
 
         server_list = readthem.fetchall()
-        print(server_list)
+        #print(server_list)
         for row in server_list:
             readthem.execute("SELECT Prefix FROM server_{0}".format(row[1]))
             prefixes[row[1]] = readthem.fetchall()[0][0]
 
-        print(prefixes)
+        #print(prefixes)
         conn.close()
         if not message.guild:
             return '?'
@@ -49,7 +49,7 @@ service = build('drive', 'v3', http=creds.authorize(Http()))
 
 def upload(filename):
     metadata = {'name': filename}
-    print(filestorage)
+    #print(filestorage)
     if filename in filestorage:
         file_id = filestorage[filename]
         file = service.files().get(fileId=file_id).execute()
@@ -122,13 +122,16 @@ async def on_message(message):
 
 @bot.event
 async def on_guild_join(ctx):
+    print("Joined {0}".format(ctx.name))
     SERVERDB = "{0}.db".format(ctx.id)
     conn = database.connect(DBNAME)
     config = conn.cursor()
     config.execute("""
 CREATE TABLE server_{0} (
     Prefix varchar(255),
-    WorkCooldown int
+    WorkCooldown int,
+    MaxWork int,
+    MinWork int
 );
 """.format(ctx.id))
     config.execute("""
@@ -318,7 +321,7 @@ async def work(ctx):
 
     if len(money) > 0:
         diff = now-then
-        print(diff, now, then)
+        #print(diff, now, then)
         if money[0][2] == "Never" or ( diff.seconds/60 >= cooldown and diff.days == 0 ) or diff.days >= 1  :
             wallet = money[0][0]
             bank = money[0][1]
