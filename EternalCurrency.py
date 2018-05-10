@@ -118,9 +118,9 @@ class Currency:
         await ctx.send("You withdrew {0}!".format(amount))
         conn.commit()
         conn.close()
-	
-	@commands.command(name='addmoney', brief="Add's money to someones account. Requires Manage Channel permission")
-	@bot_control()
+        
+    @commands.command(name='addmoney', brief="Add's money to someones account. Requires Manage Channel permission")
+    @bot_control()
     async def work(self, ctx, *, person: discord.User, amount: int, place: str="Bank"):
         global upload
  
