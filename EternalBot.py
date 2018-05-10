@@ -5,6 +5,7 @@ import sqlite3 as database
 
 from discord.ext import commands
 from EternalCloudStorage import *
+from EternalChecks import *
 
 
 __version__="0.0.0"
