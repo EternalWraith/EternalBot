@@ -131,23 +131,23 @@ class Currency:
 
         if len(money) > 0:
             wallet = money[0][0]
-	        bank = money[0][1]
-	        if place == "Bank":
-		        add_to = bank+amount
-	        else:
-		        place = "Wallet"
-	            add_to = wallet+amount
-	        config.execute("""
+            bank = money[0][1]
+            if place == "Bank":
+                add_to = bank+amount
+            else:
+                place = "Wallet"
+                add_to = wallet+amount
+            config.execute("""
         UPDATE Money SET {2} = {1} WHERE UserID = {0}
         """.format(ctx.author.id, add_to, place))
-	        await ctx.send("<@{0}> was given :cookie:{1}!".format(person.id,add_to))
+            await ctx.send("<@{0}> was given :cookie:{1}!".format(person.id,add_to))
         else:
-	        if place == "Bank": 
-		        add_bank = amount
-		        add_wallet = 0
-	        else:
-		        add_bank = 0
-		        add_wallet = amount
+            if place == "Bank": 
+                add_bank = amount
+                add_wallet = 0
+            else:
+                add_bank = 0
+                add_wallet = amount
             config.execute("""
         INSERT INTO Money (UserID, Wallet, Bank, LastWork) VALUES ({0}, {2}, {1}, "{3}");
         """.format(ctx.author.id, add_bank, add_wallet, "Never"))
