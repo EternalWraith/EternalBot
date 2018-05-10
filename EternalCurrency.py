@@ -120,7 +120,7 @@ class Currency:
         conn.close()
 	
 	@commands.command(name='addmoney', brief="Add's money to someones account. Requires Manage Channel permission")
-    @bot_control()
+	@bot_control()
     async def work(self, ctx, *, person: discord.User, amount: int, place: str="Bank"):
         global upload
  
