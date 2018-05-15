@@ -3,6 +3,8 @@ import sqlite3 as database
 
 from discord.ext import commands
 
+DBNAME = "config.db"
+
 class Admin:
     def __init__(self, bot):
         self.bot = bot
