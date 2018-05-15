@@ -121,40 +121,66 @@ class Currency:
         
     @commands.command(name='addmoney', brief="Add's money to someones account. Requires Manage Channel permission")
     @bot_control()
-    async def addmoney(self, ctx, *, person: discord.User, amount: int, place: str="Bank"):
+    async def addmoney(self, ctx, *, string: str="None Bank 100"):
         global upload
- 
-        conn = database.connect("{0}.db".format(ctx.guild.id))
-        config = conn.cursor()
-        config.execute("SELECT Wallet, Bank FROM Money WHERE UserID={0}".format(person.id))
-        money = config.fetchall()
-
-        if len(money) > 0:
-            wallet = money[0][0]
-            bank = money[0][1]
-            if place == "Bank":
-                add_to = bank+amount
-            else:
-                place = "Wallet"
-                add_to = wallet+amount
-            config.execute("""
-        UPDATE Money SET {2} = {1} WHERE UserID = {0}
-        """.format(ctx.author.id, add_to, place))
-            await ctx.send("<@{0}> was given :cookie:{1}!".format(person.id,add_to))
+        error = False
+        thing = string.split(" ")
+        if len(thing) < 3:
+            thing.append("")
+            
+        if thing[0] == "None":
+            thing[0] = ctx.author.id
         else:
-            if place == "Bank": 
-                add_bank = amount
-                add_wallet = 0
+            thing[0] = thing[0].replace("<","").replace("@","").replace(">","")
+
+        if thing[1].lower() == "bank":
+            thing[1] = "Bank"
+        else if thing[1].lower() == "wallet:
+            thing[1] = "Wallet"
+        else:
+            error = "{0} is not a valid option, either Bank or Wallet".format(thing[1])
+
+        try:
+            thing[2] = int(thing[2])
+        except:
+            error = "{0} is not a number".format(thing[2])
+
+        person, place, amount = thing
+
+        if error is False:
+            conn = database.connect("{0}.db".format(ctx.guild.id))
+            config = conn.cursor()
+            config.execute("SELECT Wallet, Bank FROM Money WHERE UserID={0}".format(person))
+            money = config.fetchall()
+
+            if len(money) > 0:
+                wallet = money[0][0]
+                bank = money[0][1]
+                if place == "Bank":
+                    add_to = bank+amount
+                else:
+                    place = "Wallet"
+                    add_to = wallet+amount
+                config.execute("""
+            UPDATE Money SET {2} = {1} WHERE UserID = {0}
+            """.format(ctx.author.id, add_to, place))
+                await ctx.send("<@{0}> was given :cookie:{1}!".format(person,add_to))
             else:
-                add_bank = 0
-                add_wallet = amount
-            config.execute("""
-        INSERT INTO Money (UserID, Wallet, Bank, LastWork) VALUES ({0}, {2}, {1}, "{3}");
-        """.format(ctx.author.id, add_bank, add_wallet, "Never"))
-            await ctx.send("<@{0}> was given :cookie:{1}!".format(person.id,add_to))
-        conn.commit()
-        conn.close()
-        upload("{0}.db".format(ctx.guild.id))
+                if place == "Bank": 
+                    add_bank = amount
+                    add_wallet = 0
+                else:
+                    add_bank = 0
+                    add_wallet = amount
+                config.execute("""
+            INSERT INTO Money (UserID, Wallet, Bank, LastWork) VALUES ({0}, {2}, {1}, "{3}");
+            """.format(ctx.author.id, add_bank, add_wallet, "Never"))
+                await ctx.send("<@{0}> was given :cookie:{1}!".format(person,add_to))
+            conn.commit()
+            conn.close()
+            upload("{0}.db".format(ctx.guild.id))
+        else:
+            await ctx.send(error)
 
 
 def setup(bot):
