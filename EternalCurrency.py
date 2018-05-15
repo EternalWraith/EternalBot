@@ -124,6 +124,7 @@ class Currency:
     async def addmoney(self, ctx, *, string: str="None Bank 100"):
         global upload
         error = False
+        print(string)
         thing = string.split(" ")
         if len(thing) < 3:
             thing.append("")
@@ -131,7 +132,7 @@ class Currency:
         if thing[0] == "None":
             thing[0] = ctx.author.id
         else:
-            thing[0] = thing[0].replace("<","").replace("@","").replace(">","")
+            thing[0] = thing[0].replace("<","").replace("@!","").replace(">","")
 
         if thing[1].lower() == "bank":
             thing[1] = "Bank"
