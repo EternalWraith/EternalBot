@@ -135,7 +135,7 @@ class Currency:
 
         if thing[1].lower() == "bank":
             thing[1] = "Bank"
-        else if thing[1].lower() == "wallet:
+        elif thing[1].lower() == "wallet:
             thing[1] = "Wallet"
         else:
             error = "{0} is not a valid option, either Bank or Wallet".format(thing[1])
