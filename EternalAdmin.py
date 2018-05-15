@@ -2,6 +2,7 @@ import discord
 import sqlite3 as database
 
 from discord.ext import commands
+from EternalCloudStorage import *
 
 DBNAME = "config.db"
 
