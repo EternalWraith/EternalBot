@@ -21,22 +21,6 @@ class Fun:
         em.set_image(url=user.avatar_url)
         await ctx.channel.send(embed=em)
 
-    @commands.command(name='invite')
-    async def invite(self, ctx):
-            perms = discord.Permissions.none()
-            perms.read_messages = True
-            perms.send_messages = True
-            perms.manage_roles = True
-            perms.ban_members = True
-            perms.kick_members = True
-            perms.manage_messages = True
-            perms.embed_links = True
-            perms.read_message_history = True
-            perms.attach_files = True
-            app_info = await commands.application_info()
-            await ctx.send("Here you go friend! One invite just for you!\n{0}"
-                               .format(discord.utils.oauth_url(app_info.id, perms)))
-
 
 def setup(bot):
     bot.add_cog(Fun(bot))
