@@ -33,7 +33,7 @@ class Fun:
             perms.embed_links = True
             perms.read_message_history = True
             perms.attach_files = True
-            app_info = await bot.application_info()
+            app_info = await commands.application_info()
             await ctx.send("Here you go friend! One invite just for you!\n{0}"
                                .format(discord.utils.oauth_url(app_info.id, perms)))
 
