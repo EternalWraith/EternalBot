@@ -165,7 +165,7 @@ class Currency:
                 config.execute("""
             UPDATE Money SET {2} = {1} WHERE UserID = {0}
             """.format(ctx.author.id, add_to, place))
-                await ctx.send("<@{0}> was given :cookie:{1}!".format(person,add_to))
+                await ctx.send("<@{0}> was given :cookie:{1}!".format(person,amount))
             else:
                 if place == "Bank": 
                     add_bank = amount
@@ -176,7 +176,7 @@ class Currency:
                 config.execute("""
             INSERT INTO Money (UserID, Wallet, Bank, LastWork) VALUES ({0}, {2}, {1}, "{3}");
             """.format(ctx.author.id, add_bank, add_wallet, "Never"))
-                await ctx.send("<@{0}> was given :cookie:{1}!".format(person,add_to))
+                await ctx.send("<@{0}> was given :cookie:{1}!".format(person,amount))
             conn.commit()
             conn.close()
             upload("{0}.db".format(ctx.guild.id))
