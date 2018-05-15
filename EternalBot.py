@@ -195,7 +195,7 @@ DROP TABLE Money;
     else:
         await ctx.send("Sorry, you don't have permission to use this command! Only Daddy Eternal has permission to use this!")
 
-@commands.command(name='invite')
+@bot.command(name='invite')
 async def invite(self, ctx):
     perms = discord.Permissions.none()
     perms.read_messages = True
