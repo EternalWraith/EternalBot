@@ -196,20 +196,20 @@ DROP TABLE Money;
         await ctx.send("Sorry, you don't have permission to use this command! Only Daddy Eternal has permission to use this!")
 
 @commands.command(name='invite')
-    async def invite(self, ctx):
-        perms = discord.Permissions.none()
-        perms.read_messages = True
-        perms.send_messages = True
-        perms.manage_roles = True
-        perms.ban_members = True
-        perms.kick_members = True
-        perms.manage_messages = True
-        perms.embed_links = True
-        perms.read_message_history = True
-        perms.attach_files = True
-        app_info = await bot.application_info()
-        await ctx.send("Here you go friend! One invite just for you!\n{0}"
-                            .format(discord.utils.oauth_url(app_info.id, perms)))
+async def invite(self, ctx):
+    perms = discord.Permissions.none()
+    perms.read_messages = True
+    perms.send_messages = True
+    perms.manage_roles = True
+    perms.ban_members = True
+    perms.kick_members = True
+    perms.manage_messages = True
+    perms.embed_links = True
+    perms.read_message_history = True
+    perms.attach_files = True
+    app_info = await bot.application_info()
+    await ctx.send("Here you go friend! One invite just for you!\n{0}"
+                        .format(discord.utils.oauth_url(app_info.id, perms)))
 
 
 #DO NOT REMOVE THIS, EVERYTHING MUST BE ABOVE THIS
