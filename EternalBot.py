@@ -1,4 +1,4 @@
-#NDM4Nzc1Mjc1MDE1MTEwNjY2.DcJtxw.8U1TRxkhnLEkRHvqF8YcWztUeGc
+
 from __future__ import print_function
 import discord, random, datetime
 import sqlite3 as database
@@ -213,4 +213,4 @@ async def invite(ctx):
 
 
 #DO NOT REMOVE THIS, EVERYTHING MUST BE ABOVE THIS
-bot.run('NDM4Nzc1Mjc1MDE1MTEwNjY2.DcJtxw.8U1TRxkhnLEkRHvqF8YcWztUeGc')
+bot.run(BOTTOKEN)
